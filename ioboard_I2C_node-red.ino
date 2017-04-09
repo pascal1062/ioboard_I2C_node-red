@@ -1,6 +1,6 @@
 
 /*****************************************************************************
-  2017-04-09 -> test github
+  2017-04-09 -> testing new AD filters instead of average.... 
   2017-04-05 -> Add INPUTS average calculations 
   2016-12-06 -> Add crc to bytes sended on I2C. now message is 20 bytes long.
 ******************************************************************************/
@@ -18,9 +18,10 @@ SPISettings TLC5620(500000, MSBFIRST, SPI_MODE1);
 const int adcChipSelect = 8;
 const int dacLoadPin[] = {10, 9}; //LOAD pin. 2 DACs TLC5620
 
-long previousMillis = 0;
+long previousMillisA = 0;
+long previousMillisB = 0;
 
-int analogInput[8];
+int analogInput[8] = {0,23,189,302,443,604,903,1023};  //un test pour les averages.....
 byte analogInputBytes[16]; //analog input 0@7 separate in two bytes MSB,LSB {MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB}
 int idx = 0;
 int aiIdx = 0;
@@ -65,12 +66,13 @@ void setup() {
 void loop() {
 
   for (int i = 0; i <= 7; i++) {
-    analogInput[i] = adcChannelRead(i);
+    //analogInput[i] = adcChannelRead(i);
     analogInTwoBytes(i);
   }
 
   readAvgAnalogIn();
   analogOutputWrite();
+  serialOut();
  
 }
 
@@ -94,8 +96,8 @@ int adcChannelRead(byte readAddress) {
 void readAvgAnalogIn() {  
   unsigned long currentMillis = millis();
 
-  if(currentMillis - previousMillis  > 5) {
-    previousMillis = currentMillis;
+  if(currentMillis - previousMillisA  > 5) {
+    previousMillisA = currentMillis;
 
     if (count > 9) count = 0;
     readingsAI1[count] = analogInput[0];
@@ -254,6 +256,55 @@ unsigned int generateCRC(byte *buf, byte messageLength) {
   crcHigh |= crcLow;
   crc = crcHigh;
   return crc;
+}
+
+void serialOut() {
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillisB > 1000) {
+    // save the last time
+    previousMillisB = currentMillis;
+
+    Serial.print(analogInputAvg[0]);
+    Serial.print(";");
+    Serial.print(analogInputAvg[1]);
+    Serial.print(";");
+    Serial.print(analogInputAvg[2]);
+    Serial.print(";");
+    Serial.print(analogInputAvg[3]);
+    Serial.print(";");
+    Serial.print(analogInputAvg[4]);
+    Serial.print(";");
+    Serial.print(analogInputAvg[5]);
+    Serial.print(";");
+    Serial.print(analogInputAvg[6]);
+    Serial.print(";");
+    Serial.print(analogInputAvg[7]);
+    Serial.println();
+
+    for (int i = 0; i<16; i++) {
+      Serial.print(analogInputBytes[i]);
+      Serial.print(";");      
+    }
+    Serial.println();
+    
+    //Serial.print(analogOutput[0]);
+    //Serial.print(";");
+    //Serial.print(analogOutput[1]);
+    //Serial.print(";");
+    //Serial.print(analogOutput[2]);
+    //Serial.print(";");
+    //Serial.print(analogOutput[3]);
+    //Serial.print(";");
+    //Serial.print(analogOutput[4]);
+    //Serial.print(";");
+    //Serial.print(analogOutput[5]);
+    //Serial.print(";");
+    //Serial.print(analogOutput[6]);
+    //Serial.print(";");
+    //Serial.print(analogOutput[7]);
+    //Serial.println();;
+  }
 }
 
 //Fin
