@@ -20,6 +20,7 @@ const int dacLoadPin[] = {10, 9}; //LOAD pin. 2 DACs TLC5620
 
 long previousMillisA = 0;
 long previousMillisB = 0;
+long previousMillisC = 0;
 
 int analogInput[8] = {0,23,189,302,443,604,903,1023};  //un test pour les averages.....
 byte analogInputBytes[16]; //analog input 0@7 separate in two bytes MSB,LSB {MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB}
@@ -39,6 +40,11 @@ int readingsAI6[10];
 int readingsAI7[10];
 int readingsAI8[10];
 byte count = 0;
+
+float filter = 0.2;
+long lastvalueAI[8] = {0,0,0,0,0,0,0,0}; 
+long newvalueAI[8] = {0,0,0,0,0,0,0,0};
+int analogInputFilt[8] = {0,0,0,0,0,0,0,0}; 
 
 
 void setup() {
@@ -73,6 +79,16 @@ void loop() {
   readAvgAnalogIn();
   analogOutputWrite();
   serialOut();
+
+  unsigned long currentMillis = millis();
+  if(currentMillis - previousMillisC  > 25) {
+    previousMillisC = currentMillis; 
+  
+    for (int i = 0; i <= 7; i++) {
+      adfilterCalc(i);
+    }
+
+  }
  
 }
 
@@ -132,6 +148,16 @@ int getAgerage(int readings[10]) {
     avg = sum / 10; 
    
     return avg;
+}
+
+void adfilterCalc(byte ai) {
+  int calcValue = 0;
+
+  newvalueAI[ai] = long(analogInputAvg[ai]) * 100;
+  calcValue = int((lastvalueAI[ai]+ (filter * (newvalueAI[ai] - lastvalueAI[ai]))) / 100);
+  lastvalueAI[ai] = long(calcValue) * 100;
+  analogInputFilt[ai] = calcValue;
+  
 }
 
 void analogInTwoBytes(int id) { //Put 10 bits analog input in two separate bytes. For sending through I2C.
@@ -282,8 +308,8 @@ void serialOut() {
     Serial.print(analogInputAvg[7]);
     Serial.println();
 
-    for (int i = 0; i<16; i++) {
-      Serial.print(analogInputBytes[i]);
+    for (int i = 0; i<8; i++) {
+      Serial.print(analogInputFilt[i]);
       Serial.print(";");      
     }
     Serial.println();
