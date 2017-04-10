@@ -1,6 +1,6 @@
 
 /*****************************************************************************
-  2017-04-09 -> test github
+  2017-04-09 -> Increase INPUTS average calculations 
   2017-04-05 -> Add INPUTS average calculations 
   2016-12-06 -> Add crc to bytes sended on I2C. now message is 20 bytes long.
 ******************************************************************************/
@@ -20,8 +20,8 @@ const int dacLoadPin[] = {10, 9}; //LOAD pin. 2 DACs TLC5620
 
 long previousMillis = 0;
 
-int analogInput[8];
-byte analogInputBytes[16]; //analog input 0@7 separate in two bytes MSB,LSB {MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB}
+int analogInput[8] = {0,0,0,0,0,0,0,0}; 
+byte analogInputBytes[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //analog input 0@7 separate in two bytes MSB,LSB {MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB,MSB,LSB}
 int idx = 0;
 int aiIdx = 0;
 
@@ -29,14 +29,14 @@ byte analogOutput[8];
 const byte dacAddress[] = {0x03, 0x01, 0x05, 0x07}; //DAC addr and range bit. first bytes to send to TLC5620
 
 int analogInputAvg[8]; 
-int readingsAI1[10];
-int readingsAI2[10];
-int readingsAI3[10];
-int readingsAI4[10];
-int readingsAI5[10];
-int readingsAI6[10];
-int readingsAI7[10];
-int readingsAI8[10];
+int readingsAI1[20];
+int readingsAI2[20];
+int readingsAI3[20];
+int readingsAI4[20];
+int readingsAI5[20];
+int readingsAI6[20];
+int readingsAI7[20];
+int readingsAI8[20];
 byte count = 0;
 
 
@@ -71,7 +71,7 @@ void loop() {
 
   readAvgAnalogIn();
   analogOutputWrite();
- 
+
 }
 
 int adcChannelRead(byte readAddress) {
@@ -94,10 +94,10 @@ int adcChannelRead(byte readAddress) {
 void readAvgAnalogIn() {  
   unsigned long currentMillis = millis();
 
-  if(currentMillis - previousMillis  > 5) {
+  if(currentMillis - previousMillis  > 10) {
     previousMillis = currentMillis;
 
-    if (count > 9) count = 0;
+    if (count > 19) count = 0;
     readingsAI1[count] = analogInput[0];
     readingsAI2[count] = analogInput[1];
     readingsAI3[count] = analogInput[2];
@@ -120,14 +120,14 @@ void readAvgAnalogIn() {
   }
 }
 
-int getAgerage(int readings[10]) {
+int getAgerage(int readings[20]) {
     int sum = 0;
     int avg = 0;
     
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
        sum += readings[i]; 
     }
-    avg = sum / 10; 
+    avg = sum / 20; 
    
     return avg;
 }
